@@ -46,6 +46,10 @@ def main_loop() -> None:
                         from modules.modes.general import ModeSpin
 
                         mode = ModeSpin()
+                    case "dayCareRun":
+                        from modules.modes.general import DayCareRun
+
+                        mode = DayCareRun()
 
                     case "Starters":
                         from modules.modes.starters import ModeStarters
@@ -62,10 +66,17 @@ def main_loop() -> None:
 
                         mode = ModeBunnyHop()
 
+
                     case "Rayquaza":
                         from modules.modes.legendaries import ModeRayquaza
 
                         mode = ModeRayquaza()
+
+                    case "wynaut_egg":
+                        from modules.modes.wynaut import WynautEgg
+
+                        mode = WynautEgg()
+
 
             try:
                 if mode:

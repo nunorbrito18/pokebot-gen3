@@ -4,7 +4,6 @@ from modules.context import context
 from modules.memory import get_task, get_game_state, GameState
 from modules.trainer import trainer, RunningStates, TileTransitionStates, AcroBikeStates
 
-
 class TaskFishing(Enum):
     INIT = 0
     GET_ROD_OUT = 1
@@ -43,6 +42,32 @@ class ModeSpin:
                         return
             yield
 
+class DayCareRun:
+    def __init__(self):
+        self.clockwise = ["Right", "Left"]
+        
+    def get_next_direction(self, current_direction):
+        current_index = self.clockwise.index(current_direction)
+        next_index = (current_index + 1) % 2
+        return self.clockwise[next_index]
+
+    def step(self):
+        DIRECTION = self.get_next_direction(trainer.get_facing_direction())
+        while True:
+            match (trainer.get_running_state(), trainer.get_tile_transition_state()):
+                case (RunningStates.NOT_MOVING, TileTransitionStates.NOT_MOVING):
+                    context.emulator.press_button(DIRECTION)
+                case (RunningStates.TURN_DIRECTION, TileTransitionStates.NOT_MOVING):
+                    context.emulator.press_button(DIRECTION)
+                case (RunningStates.MOVING, TileTransitionStates.TRANSITIONING):
+                    context.emulator.press_button(DIRECTION)
+                case (RunningStates.MOVING, TileTransitionStates.TRANSITIONING):
+                    context.emulator.press_button(DIRECTION)
+                case (RunningStates.MOVING, TileTransitionStates.NOT_MOVING):
+                    DIRECTION = self.get_next_direction(trainer.get_facing_direction())
+                    context.emulator.press_button(DIRECTION)
+                    
+            yield
 
 class ModeFishing:
     def step(self):
