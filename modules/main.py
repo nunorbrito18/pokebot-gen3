@@ -28,8 +28,8 @@ def main_loop() -> None:
             from modules.http import http_server
 
             Thread(target=http_server).start()
-
         while True:
+            
             if not mode and get_game_state() == GameState.BATTLE and context.bot_mode != "Starters":
                 if opponent_changed():
                     encounter_pokemon(get_opponent())

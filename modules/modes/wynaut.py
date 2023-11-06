@@ -2,29 +2,31 @@ from enum import Enum
 
 from modules.console import console
 from modules.context import context
-from modules.memory import get_task, read_symbol
+from modules.memory import get_task, read_symbol, get_event_flag, get_game_state, GameState
+from modules.pokemon import get_party
 
 class ModeWynautEggStates(Enum):
     RESET = 0
-    MSG1 = 1
-    MSG2 = 2
-    MSG3 = 3
-    MSG4 = 4
-    MSG5 = 5
-    MSG6 = 6
-    QUESTION = 7
-    THANKS_MSG = 8
-    CONFIRMATION_MSG = 9
-#gStringVar4
-#Good! I hope you’ll walk plenty with this here EGG!
+    OVERWORLD = 1
+    TITLE = 2
+
+
 class WynautEgg:
     def __init__(self) -> None:
         self.state: ModeWynautEggStates = ModeWynautEggStates.RESET
         self.party_count = read_symbol("gPlayerPartyCount", size=1)[0]
+
+        context.emulator.press_button("A")
+                        
+        #save game
         #Must be Emerald Game
         #Must be in position x, facing lady
         #Must save game before recieving egg??
         #Must have 1 inventory space
+            #if pokemon.is_shiny == True:
+            #    console.log(pokemon.name)
+            #else:
+            #    console.log(pokemon.name)
 
     def update_state(self, state: ModeWynautEggStates):
         self.state: ModeWynautEggStates = state
@@ -38,25 +40,36 @@ class WynautEgg:
             while True: 
                 match self.state:
                     case ModeWynautEggStates.RESET:
-                        context.emulator.press_button("A")
-                        #get_emulator().run_single_frame()
-                        actual_party_count = read_symbol("gPlayerPartyCount", size=1)[0]
-                        if not (actual_party_count == self.party_count+1):
-                            if get_task("TASK_DRAWFIELDMESSAGEBOX2") == {}: #First time 
-                                context.emulator.press_button("A") # presses 1 time A to chat with lady
-                                console.log("a")
-                                #get_emulator().run_single_frame()
-                            else: #Didn't start talking with lady 
+                        if not get_event_flag("FLAG_RECEIVED_LAVARIDGE_EGG"):
+                            if get_task("TASK_DRAWFIELDMESSAGEBOX2") == {}: # While having messages from the lady.
                                 context.emulator.press_button("A")
-                                #get_emulator().run_single_frame()
-                                console.log("else")
+                            else: # First button press. Didn't start talking with lady yet.
+                                context.emulator.press_button("A")# TODO: remove second else, always A
                         else:
-                            console.log("finito")
-                            context.emulator.press_button("A")
-                            #get_emulator().run_single_frame()
-                            context.bot_mode = "Manual"
-                yield
+                            console.log("finito") #TODO: refactor
+                            for pokemon in get_party():
+                                if pokemon.location_met == "Traded" and pokemon.name == "EGG":
+                                    console.log(pokemon.species.name)
+                                    #validate if is shiny
+                                    if pokemon.is_shiny == True: 
+                                        context.bot_mode = "Manual"
+                                        console.log("Fds")
+                                    else:
+                                        console.log("not shiny")
+                                        #context.emulator.re
+                                        # 
+                                        # set()
+                    
+                    case ModeWynautEggStates.TITLE:
+                            match get_game_state():
+                                case GameState.TITLE_SCREEN:
+                                    context.emulator.press_button("A")
+                                case GameState.MAIN_MENU:  # TODO assumes trainer is in Oak's lab, facing a ball
+                                    if get_task("TASK_HANDLEMENUINPUT").get("isActive", False):
+                                        context.message = "Waiting for a unique frame before continuing..."
+                                        self.update_state(ModeStarterStates.RNG_CHECK)
+                                        continue
 
-        
-#
+                                             
+                yield
         
